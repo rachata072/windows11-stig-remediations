@@ -6,13 +6,13 @@ Five questions you are likely to get about this project, each answered with Situ
 
 ## Q1. "Tell me about a time you hardened a system against a security standard."
 
-**Situation:** During my cybersecurity internship with LogN Pacific, I had a Windows 11 virtual machine in Azure that was built from a standard image. A credentialed Tenable scan against the DISA Windows 11 STIG showed [___] failed compliance checks.
+**Situation:** During my cybersecurity internship with LogN Pacific, I had a Windows 11 virtual machine in Azure that was built from a standard image. A credentialed Tenable scan against the DISA Windows 11 STIG showed 151 of 258 compliance checks failing.
 
 **Task:** My job was to pick STIGs from those failures, fix them, prove the fix with a rescan, and turn each fix into a reusable PowerShell script that could be published and used again.
 
 **Action:** I chose ten, focusing first on logging because the Security log was only 20 MB and would overwrite itself within hours. For each one I read the check text on STIG-A-View, fixed it by hand in Group Policy, the registry, Services, or Local Security Policy, rebooted and rescanned. Then I deliberately undid the fix and rescanned to prove the scanner was testing exactly the setting I changed. After that I wrote a PowerShell script that applies the fix, verifies it, and returns a pass or fail exit code, and I rescanned again.
 
-**Result:** All ten went from FAILED to PASSED, and the overall failed count dropped from [___] to [___]. The ten scripts and a runbook are on my GitHub, and each one is logged on the internship tracking sheet that HR uses for employer verification.
+**Result:** All ten went from FAILED to PASSED, and the overall failed count dropped from 151 to 140 with no new failures introduced. The ten scripts and a runbook are on my GitHub, and each one is logged on the internship tracking sheet that HR uses for employer verification.
 
 ---
 
@@ -24,7 +24,7 @@ Five questions you are likely to get about this project, each answered with Situ
 
 **Action:** I kept it, because a passing result on its own does not prove much. The check might be looking at a different registry path, or the setting might already have been applied by something else. When I undid each fix and the finding came back as FAILED, that proved a direct cause and effect between my change and the scanner result. To save time I batched the scans into three rounds: all manual fixes, all undos, all scripts, instead of thirty separate scans.
 
-**Result:** It actually caught a real problem. [Example if it happened to you: on WN11-AU-000050 the undo in Group Policy did not make the check fail, because advanced audit settings stay applied after the GPO is set back to not configured. I had to also run auditpol to clear it.] That taught me that "not configured" in Group Policy does not always mean "back to default", which matters a lot when you plan a rollback.
+**Result:** The full rescans caught a real problem. After the manual round all ten of my STIGs passed, but 13 other audit checks that passed at baseline were now failing. Setting Audit Process Creation through Advanced Audit Policy in local Group Policy writes an audit.csv that replaces the whole audit policy, so every default subcategory was switched off. I confirmed it with auditpol, and the undo round proved it: after removing the audit.csv files and restoring defaults, my ten failed again and the 13 passed again. That taught me two things: "Not Configured" in Group Policy does not mean "back to default", and a fix that passes its own check can still break something else. It is also why my PowerShell fix uses auditpol, which changes one subcategory only.
 
 ---
 
@@ -64,6 +64,18 @@ Five questions you are likely to get about this project, each answered with Situ
 
 ---
 
+## Q6. "Tell me about a time something did not work the way you expected. How did you troubleshoot it?"
+
+**Situation:** One STIG required the Secondary Logon service to be disabled. I set the startup type to Disabled, but the service would not stop. `Stop-Service` failed with "Cannot stop seclogon service", even after resuming it from a paused state.
+
+**Task:** Work out whether the machine was actually compliant, and make my automation reliable on this build.
+
+**Action:** Instead of retrying, I ran `sc.exe queryex seclogon`. The state flags showed `NOT_STOPPABLE, PAUSABLE, IGNORES_SHUTDOWN`, so this build does not accept a live stop for that service. I checked the STIG: it tests the startup type, which was already Disabled. I rebooted and confirmed the service stayed Stopped and Disabled. Then I looked at my script: it tried to stop the service before disabling it, so on this build it would exit before writing the setting that actually mattered. I reordered it to set Disabled first, attempt the stop, and warn that a reboot is needed instead of failing.
+
+**Result:** The old script failed in the PowerShell round exactly as predicted, the fixed one passed, and the final scan showed the STIG PASSED. The habit I took away: read the system's own status output before assuming the command is wrong, and make automation put the compliance setting first.
+
+---
+
 ## Quick facts to remember
 
 | Item | Answer |
@@ -73,5 +85,6 @@ Five questions you are likely to get about this project, each answered with Situ
 | Target | Windows 11 VM in Azure |
 | Fix methods | Group Policy, Registry, auditpol, Local Security Policy, Services, PowerShell |
 | Proof | Fail, manual pass, undo fail, PowerShell pass |
-| Biggest lesson | "Not configured" is not always "default"; and talk to the people affected before the CAB |
+| Biggest lesson | A fix can pass its own check and still break others (GPO audit.csv wiped 13 audit defaults); "Not configured" is not "default" |
+| Results | 96/151 passed/failed at baseline to 107/140 after PowerShell, no regressions |
 | GitHub | github.com/rachata072/windows11-stig-remediations |

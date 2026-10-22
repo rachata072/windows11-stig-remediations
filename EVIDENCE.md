@@ -10,12 +10,12 @@ This file holds the proof. The procedure is in [RUNBOOK.md](RUNBOOK.md). Drop ea
 
 | Item | Value |
 |------|-------|
-| VM name | |
+| VM name | STIG-Lab-bfl (Azure, private IP 10.3.0.20) |
 | Windows edition / build | Windows 11 Pro, version 25H2 (OS Build 26200.9711) |
-| PowerShell version (`$PSVersionTable.PSVersion`) | |
-| Tenable scan name | |
+| PowerShell version (`$PSVersionTable.PSVersion`) | Windows PowerShell 5.1 |
+| Tenable scan name | STIG-WIN11-bfl-lab |
 | Tenable audit file (exact name and version) | DISA Microsoft Windows 11 STIG v2r9 |
-| Rescan approach used (per STIG, or batched 3 rounds) | |
+| Rescan approach used (per STIG, or batched 3 rounds) | Batched: baseline + 3 rounds (manual, undo, PowerShell), 4 scans total |
 
 ## 2. Scan summary
 
@@ -24,7 +24,7 @@ This file holds the proof. The procedure is in [RUNBOOK.md](RUNBOOK.md). Drop ea
 | Baseline | 2026-10-20 23:03 PT (06:03 UTC) | 96 | 151 | 11 (incl. info/error) | All 10 target STIGs FAILED. WN11-00-000135 (firewall) also fails because the firewall was turned off for the lab. |
 | After manual fixes | 2026-10-21 00:13 PT (07:13 UTC) | 94 | 153 | 11 | All 10 targets PASSED, plus WN11-SO-000030 (dependency). But 13 audit subcategory checks regressed to FAILED (see STIG 6 notes), so net passed went down by 2. |
 | After undo | 2026-10-21 18:26 PT (01:26 UTC 22 Oct) | 97 | 150 | 11 | All 10 targets FAILED again. The 13 regressed audit checks PASSED again after removing audit.csv and restoring defaults. WN11-SO-000030 still passing (left enabled). |
-| After PowerShell fixes | | | | | |
+| After PowerShell fixes | 2026-10-21 20:11 PT (03:11 UTC 22 Oct) | 107 | 140 | 11 | All 10 targets PASSED plus WN11-SO-000030. Failed list = baseline minus exactly these 11, no new failures. Audit defaults intact (auditpol used instead of GPO). |
 
 ## 3. Setup screenshots
 
@@ -95,12 +95,12 @@ Each STIG needs four screenshots: the manual setting, Tenable PASSED after the m
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `<not set>`  After fix: `32768` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** gpedit: Event Log Service > Application > Specify the maximum log file size = 32768
 
@@ -130,12 +130,12 @@ Notes / problems hit:
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `<not set>`  After fix: `5120000` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** gpedit: Event Log Service > Security > Specify the maximum log file size = 5120000
 
@@ -165,12 +165,12 @@ Notes / problems hit:
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `<not set>`  After fix: `32768` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** gpedit: Event Log Service > System > Specify the maximum log file size = 32768
 
@@ -200,12 +200,12 @@ Notes / problems hit:
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `<not set>`  After fix: `1` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** gpedit: Windows PowerShell > Turn on PowerShell Script Block Logging = Enabled, plus a 4104 event in Event Viewer
 
@@ -235,12 +235,12 @@ Notes / problems hit:
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `<not set>`  After fix: `1` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** gpedit: Turn on PowerShell Transcription = Enabled with output folder, plus icacls output and a transcript .txt file
 
@@ -270,12 +270,12 @@ Notes / problems hit:
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `No Auditing`  After fix: `Success` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** Advanced Audit Policy > Detailed Tracking > Audit Process Creation = Success, plus auditpol output
 
@@ -318,12 +318,12 @@ Confirmed on the VM with auditpol: every default subcategory is No Auditing and 
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `<not set>`  After fix: `0` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** regedit: WDigest key showing UseLogonCredential = 0
 
@@ -353,12 +353,12 @@ Notes / problems hit:
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `<not set>`  After fix: `255` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** gpedit: AutoPlay Policies > Turn off Autoplay = Enabled, All drives
 
@@ -388,12 +388,12 @@ Notes / problems hit:
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `0`  After fix: `24` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** secpol.msc: Enforce password history = 24, plus net accounts output
 
@@ -423,12 +423,12 @@ Notes / problems hit:
 
 | Stage | Result | Scan date |
 |-------|--------|-----------|
-| Baseline | FAILED | |
-| Manual fix | | |
-| Undo | | |
-| PowerShell fix | | |
+| Baseline | FAILED | 2026-10-20 |
+| Manual fix | PASSED | 2026-10-21 |
+| Undo | FAILED | 2026-10-21 |
+| PowerShell fix | PASSED | 2026-10-21 |
 
-Tenable "Actual Value" at baseline: `________`  After fix: `________`
+Value at baseline: `Running / Manual`  After fix: `Stopped / Disabled` (from Test-STIGCompliance.ps1)
 
 **a) Manual fix:** services.msc: Secondary Logon Stopped / Disabled
 
@@ -469,6 +469,9 @@ After reboot: Stopped / Disabled.
 <!-- Upload: images/before-after-summary.png (baseline summary and final summary side by side) -->
 ![before and after](images/before-after-summary.png)
 
-**What changed in one sentence:** 
+**What changed in one sentence:** Ten DISA Windows 11 STIG findings (plus their dependency WN11-SO-000030) went from FAILED to PASSED, taking failed checks from 151 to 140 and passed from 96 to 107 with no regressions.
 
-**Biggest problem I hit and how I fixed it:** 
+**Biggest problem I hit and how I fixed it:** The manual Process Creation fix through local Group Policy Advanced Audit Policy wrote an audit.csv that replaced the whole audit policy and switched off 13 default audit subcategories. I confirmed it with auditpol, removed the audit.csv files and restored the defaults in the undo round, and used auditpol (one subcategory only) in the PowerShell fix. Final scan: no regressions.
+
+<!-- Upload: images/final-tenable-summary.png -->
+![Final Tenable summary](images/final-tenable-summary.png)

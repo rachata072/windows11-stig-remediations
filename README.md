@@ -57,17 +57,24 @@ The full step by step procedure, including gpedit paths, registry paths, undo st
 | Baseline | 2026-10-20 | 96 | 151 | 11 |
 | After manual fixes | 2026-10-21 | 94 | 153 | 11 |
 | After undo | 2026-10-21 | 97 | 150 | 11 |
-| After PowerShell fixes | | | | |
+| After PowerShell fixes | 2026-10-21 | 107 | 140 | 11 |
 
-All 10 targeted STIGs: FAILED at baseline, PASSED after manual fix, FAILED after undo, PASSED after PowerShell. (Fill in the table above from EVIDENCE.md once the scans are done.)
+All 10 targeted STIGs: FAILED at baseline, PASSED after manual fix, FAILED after undo, PASSED after PowerShell. The final failed list is the baseline list minus exactly 11 checks (the 10 targets plus their dependency WN11-SO-000030), with no new failures.
+
+### What went wrong, and what it taught me
+
+- **The manual Process Creation fix broke 13 other audit checks.** Configuring Advanced Audit Policy in local Group Policy writes an `audit.csv` that replaces the whole audit policy, so every default subcategory (logon, logoff, account management, system integrity and more) was switched to No Auditing. Passed dropped 96 to 94. The PowerShell fix uses `auditpol`, which changes one subcategory only, and the final scan showed no regressions.
+- **Secondary Logon reports `NOT_STOPPABLE` on Windows 11 25H2.** It cannot be stopped while Windows runs. The STIG checks the startup type, so the script now sets Disabled first and warns that a reboot is needed instead of failing.
+
+![Final Tenable summary](images/final-tenable-summary.png)
 
 ## Lab environment
 
 | Component | Detail |
 |-----------|--------|
-| Target | Windows 11 Pro VM in Microsoft Azure (workgroup, not domain joined) |
+| Target | Windows 11 Pro 25H2 (OS Build 26200.9711) VM in Microsoft Azure (workgroup, not domain joined) |
 | Scanner | Tenable Vulnerability Management, internal scan engine |
-| Audit | DISA Microsoft Windows 11 STIG (version noted in EVIDENCE.md) |
+| Audit | DISA Microsoft Windows 11 STIG v2r9 |
 | Scripting | Windows PowerShell 5.1 |
 | Reference | [STIG-A-View, Windows 11 V2R11](https://stigaview.com/products/win11/latest/) |
 

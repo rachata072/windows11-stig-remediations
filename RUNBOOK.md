@@ -301,6 +301,8 @@ icacls "C:\ProgramData\PS_Transcript"
 
 **Scanner checks:** `auditpol /get /category:*` shows **Detailed Tracking > Process Creation: Success**.
 
+> **Warning (found in this lab):** configuring Advanced Audit Policy in the *local* Group Policy Editor writes an `audit.csv` that **replaces the whole audit policy**. Every subcategory you do not set becomes No Auditing. In this lab, setting only Process Creation switched off 13 default subcategories (Logon, Logoff, Special Logon, User Account Management, Security Group Management, Audit Policy Change, Authentication Policy Change, Security State Change, Other System Events, System Integrity) and 13 STIG checks went from PASSED to FAILED. Safer manual option: skip step 2 below and run `auditpol /set /subcategory:"Process Creation" /success:enable` instead, which changes one subcategory only. If you use gpedit anyway, check `auditpol /get /category:*` afterwards.
+
 **B. Manual fix:**
 
 1. gpedit > Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options > **Audit: Force audit policy subcategory settings...** > Enabled.
@@ -327,6 +329,24 @@ auditpol /backup /file:C:\STIG\backup\WN11-AU-000050-auditpol.csv
 ```
 
 **E. Undo:** in gpedit set Audit Process Creation back to "not configured" (untick Configure), then also run `auditpol /set /subcategory:"Process Creation" /success:disable` because advanced audit settings can stick after the GPO is removed. Or `Undo-STIGRemediation.ps1 -StigId WN11-AU-000050`. Restart, rescan, FAILED.
+
+If you configured it with gpedit, also remove the audit policy file and restore the defaults it wiped, otherwise the next Group Policy refresh can wipe them again:
+
+```powershell
+Remove-Item "C:\Windows\System32\GroupPolicy\Machine\Microsoft\Windows NT\Audit\audit.csv" -Force -ErrorAction SilentlyContinue
+Remove-Item "C:\Windows\security\audit\audit.csv" -Force -ErrorAction SilentlyContinue
+gpupdate /force
+auditpol /set /subcategory:"Security Group Management" /success:enable
+auditpol /set /subcategory:"User Account Management" /success:enable
+auditpol /set /subcategory:"Logon" /success:enable /failure:enable
+auditpol /set /subcategory:"Logoff" /success:enable
+auditpol /set /subcategory:"Special Logon" /success:enable
+auditpol /set /subcategory:"Audit Policy Change" /success:enable
+auditpol /set /subcategory:"Authentication Policy Change" /success:enable
+auditpol /set /subcategory:"Security State Change" /success:enable
+auditpol /set /subcategory:"Other System Events" /success:enable /failure:enable
+auditpol /set /subcategory:"System Integrity" /success:enable /failure:enable
+```
 
 **F. PowerShell fix:** `remediation-STIG-ID-WN11-AU-000050.ps1` (uses the subcategory GUID `{0CCE922B-69AE-11D9-BED3-505054503030}`, which works on non-English Windows too).
 
@@ -436,6 +456,8 @@ Registry alternative: create DWORD `NoDriveTypeAutoRun` in the key above, choose
 | Script error: "cannot be loaded because running scripts is disabled" | Execution policy | `Set-ExecutionPolicy -Scope Process Bypass -Force` |
 | Script error: "The script ... cannot be run because it contains a #requires statement for running as Administrator" | Not elevated | Right click PowerShell > Run as administrator. |
 | WN11-CC-000190 fails with value 597 | Typed 255 in Hexadecimal mode | Delete and recreate as Decimal 255 (or Hex ff). |
+| 13 audit checks (Logon, Logoff, System Integrity...) suddenly FAIL after the Process Creation fix | Local GPO Advanced Audit Policy audit.csv replaced the whole audit policy | Delete both audit.csv files, `gpupdate /force`, restore defaults with auditpol (STIG 6, step E). Use auditpol instead of gpedit for single subcategories. |
+| Secondary Logon will not stop: "Cannot stop seclogon service" | Service reports NOT_STOPPABLE (`sc.exe queryex seclogon`) on Windows 11 25H2 | Set startup type Disabled (that is what the STIG checks) and reboot. The script does this and warns instead of failing. |
 | WN11-AU-000050 still fails after GPO | WN11-SO-000030 not enabled, or category level policy overriding | Enable "Force audit policy subcategory settings" and rerun the script. |
 | WN11-AU-000505 fails even though you set 1024000 | Your Tenable audit file is V2R11 or later (5120000) | Use the script value 5120000. Read the expected value in the finding. |
 | Undo did not make it FAIL again | gpedit setting still "Enabled" and reapplied the value | Set it to **Not Configured** in gpedit first, then run the undo script, then `gpupdate /force`. |

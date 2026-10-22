@@ -8,7 +8,7 @@
     LinkedIn        : linkedin.com/in/treywcp/
     GitHub          : github.com/rachata072
     Date Created    : 2026-10-20
-    Last Modified   : 2026-10-20
+    Last Modified   : 2026-10-21
     Version         : 1.0
     CVEs            : N/A
     Plugin IDs      : N/A
@@ -16,10 +16,10 @@
     Documentation   : https://stigaview.com/products/win11/v2r11/WN11-00-000175/
 
 .TESTED ON
-    Date(s) Tested  : 
+    Date(s) Tested  : 2026-10-21
     Tested By       : Trey (Rachata Wichakkhapan)
-    Systems Tested  : Windows 11 Pro (Azure VM, Cyber Range)
-    PowerShell Ver. : 
+    Systems Tested  : Windows 11 Pro 25H2, OS Build 26200.9711 (Azure VM, Cyber Range)
+    PowerShell Ver. : 5.1 (Windows PowerShell)
 
 .USAGE
     Run from an elevated PowerShell session (Run as Administrator).
