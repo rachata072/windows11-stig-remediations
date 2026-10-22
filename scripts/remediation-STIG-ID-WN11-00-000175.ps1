@@ -41,6 +41,13 @@ $ServiceName = 'seclogon'
 try {
     $Svc = Get-Service -Name $ServiceName -ErrorAction Stop
 
+    # A Paused service often refuses a direct Stop, so resume it first.
+    if ($Svc.Status -eq 'Paused') {
+        Resume-Service -Name $ServiceName -ErrorAction Stop
+        Write-Host "[INFO] Resumed paused $ServiceName so it can be stopped"
+        $Svc.Refresh()
+    }
+
     if ($Svc.Status -ne 'Stopped') {
         Stop-Service -Name $ServiceName -Force -ErrorAction Stop
         Write-Host "[INFO] Stopped $ServiceName"

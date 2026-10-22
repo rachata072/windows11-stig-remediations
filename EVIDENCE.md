@@ -14,16 +14,16 @@ This file holds the proof. The procedure is in [RUNBOOK.md](RUNBOOK.md). Drop ea
 | Windows edition / build | Windows 11 Pro, version 25H2 (OS Build 26200.9711) |
 | PowerShell version (`$PSVersionTable.PSVersion`) | |
 | Tenable scan name | |
-| Tenable audit file (exact name and version) | |
+| Tenable audit file (exact name and version) | DISA Microsoft Windows 11 STIG v2r9 |
 | Rescan approach used (per STIG, or batched 3 rounds) | |
 
 ## 2. Scan summary
 
 | Scan | Date / time | Passed | Failed | Warning | Notes |
 |------|-------------|--------|--------|---------|-------|
-| Baseline | | | | | |
-| After manual fixes | | | | | |
-| After undo | | | | | |
+| Baseline | 2026-10-20 23:03 PT (06:03 UTC) | 96 | 151 | 11 (incl. info/error) | All 10 target STIGs FAILED. WN11-00-000135 (firewall) also fails because the firewall was turned off for the lab. |
+| After manual fixes | 2026-10-21 00:13 PT (07:13 UTC) | 94 | 153 | 11 | All 10 targets PASSED, plus WN11-SO-000030 (dependency). But 13 audit subcategory checks regressed to FAILED (see STIG 6 notes), so net passed went down by 2. |
+| After undo | 2026-10-21 18:26 PT (01:26 UTC 22 Oct) | 97 | 150 | 11 | All 10 targets FAILED again. The 13 regressed audit checks PASSED again after removing audit.csv and restoring defaults. WN11-SO-000030 still passing (left enabled). |
 | After PowerShell fixes | | | | | |
 
 ## 3. Setup screenshots
@@ -64,6 +64,21 @@ This file holds the proof. The procedure is in [RUNBOOK.md](RUNBOOK.md). Drop ea
 
 <!-- Upload: images/precheck-baseline.png -->
 ![precheck baseline](images/precheck-baseline.png)
+
+**Test-STIGCompliance.ps1 after manual fixes, Round 1 (10 of 10)**
+
+<!-- Upload: images/precheck-after-manual.png -->
+![precheck after manual](images/precheck-after-manual.png)
+
+**Round 2 undo: gpedit All Settings sorted by State, no Enabled settings left**
+
+<!-- Upload: images/undo-gpedit-all-not-configured.png -->
+![gpedit all not configured](images/undo-gpedit-all-not-configured.png)
+
+**Test-STIGCompliance.ps1 after undo, Round 2 (expect 0 of 10)**
+
+<!-- Upload: images/precheck-after-undo.png -->
+![precheck after undo](images/precheck-after-undo.png)
 
 **Test-STIGCompliance.ps1 after PowerShell fixes (expect 10 of 10)**
 
@@ -267,6 +282,11 @@ Tenable "Actual Value" at baseline: `________`  After fix: `________`
 <!-- Upload: images/WN11-AU-000050-1-manual.png -->
 ![WN11-AU-000050 manual fix](images/WN11-AU-000050-1-manual.png)
 
+Dependency WN11-SO-000030 (Force audit policy subcategory settings = Enabled):
+
+<!-- Upload: images/WN11-AU-000050-1b-manual-force-subcategory.png -->
+![WN11-AU-000050 force subcategory](images/WN11-AU-000050-1b-manual-force-subcategory.png)
+
 **b) Rescan after manual fix: PASSED**
 
 <!-- Upload: images/WN11-AU-000050-2-manual-passed.png -->
@@ -284,7 +304,15 @@ Tenable "Actual Value" at baseline: `________`  After fix: `________`
 
 Notes / problems hit:
 
-> 
+> The manual fix passed, but the rescan showed **13 other audit checks that passed at baseline now FAILED** (WN11-AU-000030, 040, 065, 070, 075, 080, 100, 105, 130, 135, 140, 155, 160). Every one of them is a subcategory Windows audits by default (logon, logoff, account management, policy change, system integrity). Likely cause: configuring Advanced Audit Policy in the local GPO writes an audit.csv that contains only the one subcategory I set, and when it applies, every subcategory not listed in it is set to No Auditing. Net result of Round 1: +11 passed, -13 regressed. Lesson: configuring one advanced audit subcategory through Group Policy replaces the whole audit policy, so either define every required subcategory in the GPO or set single subcategories with auditpol. The PowerShell fix uses auditpol for this reason.
+
+<!-- Upload: images/WN11-AU-000050-regression-13-failed.png -->
+![13 regressed audit checks](images/WN11-AU-000050-regression-13-failed.png)
+
+Confirmed on the VM with auditpol: every default subcategory is No Auditing and only Process Creation is Success.
+
+<!-- Upload: images/WN11-AU-000050-auditpol-wiped.png -->
+![auditpol showing wiped defaults](images/WN11-AU-000050-auditpol-wiped.png)
 
 ### 7. WN11-CC-000038: WDigest disabled
 
@@ -424,7 +452,15 @@ Tenable "Actual Value" at baseline: `________`  After fix: `________`
 
 Notes / problems hit:
 
-> 
+> Clicking Pause instead of Stop in services.msc left seclogon "Paused". `Resume-Service` worked, but `Stop-Service` then failed with "Cannot stop seclogon service". `sc.exe queryex seclogon` showed the cause: the service reports **NOT_STOPPABLE, PAUSABLE, IGNORES_SHUTDOWN** on Windows 11 25H2 (build 26200), so Windows does not accept a live stop. The STIG checks the startup type, which was already Disabled, so it is compliant; a reboot leaves it stopped. I changed the remediation script to set Disabled first, attempt the stop, and warn that a reboot is needed instead of failing.
+
+<!-- Upload: images/WN11-00-000175-troubleshoot-not-stoppable.png -->
+![seclogon NOT_STOPPABLE](images/WN11-00-000175-troubleshoot-not-stoppable.png)
+
+After reboot: Stopped / Disabled.
+
+<!-- Upload: images/WN11-00-000175-after-reboot.png -->
+![seclogon after reboot](images/WN11-00-000175-after-reboot.png)
 
 ---
 

@@ -54,9 +54,9 @@ The full step by step procedure, including gpedit paths, registry paths, undo st
 
 | Scan | Date | Passed | Failed | Warning |
 |------|------|--------|--------|---------|
-| Baseline | | | | |
-| After manual fixes | | | | |
-| After undo | | | | |
+| Baseline | 2026-10-20 | 96 | 151 | 11 |
+| After manual fixes | 2026-10-21 | 94 | 153 | 11 |
+| After undo | 2026-10-21 | 97 | 150 | 11 |
 | After PowerShell fixes | | | | |
 
 All 10 targeted STIGs: FAILED at baseline, PASSED after manual fix, FAILED after undo, PASSED after PowerShell. (Fill in the table above from EVIDENCE.md once the scans are done.)
